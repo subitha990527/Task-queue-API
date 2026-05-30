@@ -35,12 +35,23 @@ const createTask = async (req, res, next) => {
 // Get Tasks
 const getTasks = async (req, res, next) => {
   try {
-    const { status } = req.query;
+    const { status, search } = req.query;
 
     let filter = {};
 
+    
+    // Filter by status
     if (status) {
       filter.status = status;
+    }
+
+    
+    // Search by title
+    if (search) {
+      filter.title = {
+        $regex: search,
+        $options: "i",
+      };
     }
 
     const tasks = await Task.find(filter).sort({
