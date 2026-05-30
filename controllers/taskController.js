@@ -37,16 +37,17 @@ const getTasks = async (req, res, next) => {
   try {
     const { status, search } = req.query;
 
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 5;
+
+    const skip = (page - 1) * limit;
+
     let filter = {};
 
-    
-    // Filter by status
     if (status) {
       filter.status = status;
     }
 
-    
-    // Search by title
     if (search) {
       filter.title = {
         $regex: search,
@@ -54,12 +55,18 @@ const getTasks = async (req, res, next) => {
       };
     }
 
-    const tasks = await Task.find(filter).sort({
-      createdAt: -1,
-    });
+    const totalTasks = await Task.countDocuments(filter);
+
+    const tasks = await Task.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
+      currentPage: page,
+      totalPages: Math.ceil(totalTasks / limit),
+      totalTasks,
       count: tasks.length,
       tasks,
     });
